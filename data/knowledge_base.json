@@ -1,0 +1,26 @@
+{
+  "courses": {
+    "MATH101": {"prerequisite": null, "corequisites": []},
+    "CS101": {"prerequisite": null, "corequisites": []},
+    "CS102": {"prerequisite": "CS101", "corequisites": []},
+    "CS201": {"prerequisite": {"and": ["CS101", "MATH101"]}, "corequisites": []},
+    "CS202": {"prerequisite": {"or": ["CS101", "MATH101"]}, "corequisites": []},
+    "CS203": {"prerequisite": "CS102", "corequisites": ["CS201"]},
+    "CS301": {"prerequisite": "CS203", "corequisites": []},
+    "CS302": {"prerequisite": {"and": ["CS102", {"or": ["CS101", "MATH101"]}]}, "corequisites": []},
+    "CS401": {"prerequisite": "CS402", "corequisites": []},
+    "CS402": {"prerequisite": "CS401", "corequisites": []}
+  },
+  "students": {
+    "bob": {
+      "completed": ["CS101", "MATH101", "CS102"],
+      "taking": ["CS201"],
+      "waivers": [{"course": "CS202", "prerequisite": "MATH101"}]
+    },
+    "alice": {
+      "completed": ["CS101"],
+      "taking": [],
+      "waivers": []
+    }
+  }
+}
