@@ -224,8 +224,13 @@ def backward_chain(kb, student_id, course_id):
 def forward_chain(kb, student_id, course_id):
     """Determine eligibility by saturating facts with forward rule applications."""
     predicates = to_predicates(kb)
+    students = [student_id]
     courses = list(kb.get("courses", {}))
-    domains = {"eligible": {2: courses}, "prereq_satisfied": {2: courses}}
+    domains = {
+        "eligible": {1: students, 2: courses},
+        "coreqs_satisfied": {1: students, 2: courses},
+        "prereq_satisfied": {2: courses},
+    }
     closure = forward_prove(predicates["facts"], predicates["rules"], domains)
     target = ("eligible", student_id, course_id)
     eligible = target in closure["facts"]

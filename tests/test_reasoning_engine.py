@@ -17,6 +17,20 @@ def test_no_prerequisite_and_unseen_identifiers():
     assert backward_chain(data, "s", "A")["eligible"] is True
 
 
+def test_empty_known_student_is_eligible_for_no_prerequisite_course():
+    data = kb({"A": (None, []), "B": (None, [])})
+    data["students"]["other"] = {
+        "completed": ["B"], "taking": [], "waivers": []
+    }
+
+    backward = backward_chain(data, "s", "A")
+    forward = forward_chain(data, "s", "A")
+
+    assert backward["eligible"] is True
+    assert forward["eligible"] is True
+    assert not any("('eligible', 'other', 'A')" in event for event in forward["trace"])
+
+
 def test_single_prerequisite_and_missing():
     data = kb({"A": ("B", []), "B": (None, [])}, completed=["B"])
     assert backward_chain(data, "s", "A")["eligible"] is True
