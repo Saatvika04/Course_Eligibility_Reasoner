@@ -1,0 +1,154 @@
+{
+  "courses": {
+    "INTRO": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "BASE": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "SINGLE": {
+      "prerequisite": "BASE",
+      "corequisites": []
+    },
+    "AND_A": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "AND_B": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "AND_TARGET": {
+      "prerequisite": {
+        "and": [
+          "AND_A",
+          "AND_B"
+        ]
+      },
+      "corequisites": []
+    },
+    "OR_A": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "OR_B": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "OR_TARGET": {
+      "prerequisite": {
+        "or": [
+          "OR_A",
+          "OR_B"
+        ]
+      },
+      "corequisites": []
+    },
+    "OR_MISSING_A": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "OR_MISSING_B": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "OR_MISSING_TARGET": {
+      "prerequisite": {
+        "or": [
+          "OR_MISSING_A",
+          "OR_MISSING_B"
+        ]
+      },
+      "corequisites": []
+    },
+    "COREQ_Q": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "COREQ_TARGET": {
+      "prerequisite": null,
+      "corequisites": [
+        "COREQ_Q"
+      ]
+    },
+    "COREQ_M": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "COREQ_MISSING_TARGET": {
+      "prerequisite": null,
+      "corequisites": [
+        "COREQ_M"
+      ]
+    },
+    "WAIVER_PREREQ": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "WAIVER_TARGET": {
+      "prerequisite": "WAIVER_PREREQ",
+      "corequisites": []
+    },
+    "WAIVER_OTHER_TARGET": {
+      "prerequisite": "WAIVER_PREREQ",
+      "corequisites": []
+    },
+    "CHAIN_BASE": {
+      "prerequisite": null,
+      "corequisites": []
+    },
+    "CHAIN_MID": {
+      "prerequisite": "CHAIN_BASE",
+      "corequisites": []
+    },
+    "CHAIN_TOP": {
+      "prerequisite": "CHAIN_MID",
+      "corequisites": []
+    },
+    "CYCLE_A": {
+      "prerequisite": "CYCLE_B",
+      "corequisites": []
+    },
+    "CYCLE_B": {
+      "prerequisite": "CYCLE_A",
+      "corequisites": []
+    }
+  },
+  "students": {
+    "case_student": {
+      "completed": [
+        "BASE",
+        "AND_A",
+        "AND_B",
+        "OR_A",
+        "CHAIN_BASE",
+        "CHAIN_MID"
+      ],
+      "taking": [
+        "COREQ_Q"
+      ],
+      "waivers": [
+        {
+          "course": "WAIVER_TARGET",
+          "prerequisite": "WAIVER_PREREQ"
+        }
+      ]
+    },
+    "partial_student": {
+      "completed": [
+        "AND_A"
+      ],
+      "taking": [],
+      "waivers": []
+    },
+    "chain_student": {
+      "completed": [
+        "CHAIN_BASE"
+      ],
+      "taking": [],
+      "waivers": []
+    }
+  }
+}
