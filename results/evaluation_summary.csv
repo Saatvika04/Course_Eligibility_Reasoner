@@ -1,0 +1,3 @@
+algorithm,labelled_cases,correct_verdicts,incorrect_verdicts,accuracy_percent,repeats_per_case
+forward,16,16,0,100.00,3
+backward,16,16,0,100.00,3
