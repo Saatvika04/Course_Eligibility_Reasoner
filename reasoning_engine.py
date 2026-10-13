@@ -84,7 +84,9 @@ def backward_prove(facts, rules, goal):
 
     Active-path keys are local to the current branch. ``inference_steps`` is
     the number of goals entered, including goals rejected as cycles;
-    ``rules_examined`` counts candidate rule heads inspected.
+    ``rules_examined`` counts candidate rule heads inspected. Backward
+    eligibility results have ``derived_facts=None`` because this algorithm
+    does not build a closure.
     """
     state = {"steps": 0, "rules": 0, "trace": [], "active": [], "failed_goals": []}
 
@@ -139,6 +141,9 @@ def forward_prove(facts, rules, position_domains=None):
     ``position_domains`` optionally constrains otherwise-unbound head
     variables by predicate argument position; it keeps universal rules over
     the KB's finite values from deriving irrelevant cross-domain tuples.
+    Here ``inference_steps`` counts body-to-fact unification attempts,
+    ``rules_examined`` counts each rule once per closure pass, and
+    ``derived_facts`` counts unique facts added beyond the input facts.
     """
     position_domains = position_domains or {}
     known = list(dict.fromkeys(tuple(f) for f in facts))
