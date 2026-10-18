@@ -66,10 +66,10 @@ def to_predicates(kb):
         for q in coreqs:
             facts.append(("coreq", cid, q))
 
-        # corequisites satisfied only if every corequisite is being taken.
+        # corequisites satisfied only if the student is taking every corequisite.
         rules.append({
             "head": ("coreqs_satisfied", S, cid),
-            "body": [("taking", S, q) for q in coreqs],
+            "body": [("student", S)] + [("taking", S, q) for q in coreqs],
         })
 
         if prereq is None:
@@ -89,16 +89,25 @@ def to_predicates(kb):
                 ],
             })
         else:
+            leaves = set()
             for clause in _to_dnf(prereq):
+                for p in clause:
+                    leaves.add(p)
                 body = [("prereq_satisfied", S, cid, p) for p in clause]
                 body.append(("coreqs_satisfied", S, cid))
                 rules.append({"head": ("eligible", S, cid), "body": body})
+            for p in leaves:
+                facts.append(("prereq", cid, p))
 
     # Global rules: how a single prerequisite is satisfied.
     rules.append({"head": ("prereq_satisfied", S, C, P), "body": [("waiver", S, C, P)]})
-    rules.append({"head": ("prereq_satisfied", S, C, P), "body": [("completed", S, P)]})
+    rules.append({
+        "head": ("prereq_satisfied", S, C, P),
+        "body": [("prereq", C, P), ("completed", S, P)],
+    })
 
     for sid, student in students.items():
+        facts.append(("student", sid))
         for c in student.get("completed", []):
             facts.append(("completed", sid, c))
         for c in student.get("taking", []):

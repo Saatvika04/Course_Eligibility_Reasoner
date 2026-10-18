@@ -1,3 +1,4 @@
+import json
 import os
 
 from to_predicates import to_predicates, Var
@@ -71,3 +72,27 @@ def test_waiver_fact_emitted():
     }
     pred = to_predicates(kb)
     assert ("waiver", "s", "A", "B") in pred["facts"]
+
+
+def test_and_prereq_emits_leaf_prereq_facts():
+    kb = {
+        "courses": {
+            "A": {"prerequisite": {"and": ["B", "C"]}, "corequisites": []},
+            "B": {"prerequisite": None, "corequisites": []},
+            "C": {"prerequisite": None, "corequisites": []},
+        },
+        "students": {},
+    }
+    pred = to_predicates(kb)
+    assert ("prereq", "A", "B") in pred["facts"]
+    assert ("prereq", "A", "C") in pred["facts"]
+
+
+def test_rules_are_range_restricted():
+    with open(DEMO) as f:
+        kb = json.load(f)
+    pred = to_predicates(kb)
+    for rule in pred["rules"]:
+        head_vars = {t for t in rule["head"] if isinstance(t, Var)}
+        body_vars = {t for lit in rule["body"] for t in lit if isinstance(t, Var)}
+        assert head_vars <= body_vars, f"head var not in body: {rule['head']}"
