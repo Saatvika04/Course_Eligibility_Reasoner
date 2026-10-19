@@ -43,6 +43,46 @@ def test_validate_rejects_bad_waiver():
     assert any("waiver" in e for e in validate_kb(kb))
 
 
+def test_validate_rejects_unknown_expression_key():
+    kb = {
+        "courses": {
+            "A": {"prerequisite": {"orr": ["B"]}, "corequisites": []},
+            "B": {"prerequisite": None, "corequisites": []},
+        },
+        "students": {},
+    }
+    assert any("unknown key 'orr'" in e for e in validate_kb(kb))
+
+
+def test_validate_rejects_empty_course_id():
+    kb = {"courses": {"": {"prerequisite": None, "corequisites": []}}, "students": {}}
+    assert any("course id must not be empty" in e for e in validate_kb(kb))
+
+
+def test_validate_rejects_empty_student_id():
+    kb = {
+        "courses": {"A": {"prerequisite": None, "corequisites": []}},
+        "students": {"": {"completed": [], "taking": [], "waivers": []}},
+    }
+    assert any("student id must not be empty" in e for e in validate_kb(kb))
+
+
+def test_validate_rejects_self_corequisite():
+    kb = {"courses": {"A": {"prerequisite": None, "corequisites": ["A"]}}, "students": {}}
+    assert any("itself as a corequisite" in e for e in validate_kb(kb))
+
+
+def test_validate_rejects_duplicate_corequisite():
+    kb = {
+        "courses": {
+            "A": {"prerequisite": None, "corequisites": ["B", "B"]},
+            "B": {"prerequisite": None, "corequisites": []},
+        },
+        "students": {},
+    }
+    assert any("more than once" in e for e in validate_kb(kb))
+
+
 def test_save_and_load_roundtrip(tmp_path):
     kb = {"courses": {"A": {"prerequisite": None, "corequisites": []}}, "students": {}}
     p = tmp_path / "kb.json"
@@ -54,6 +94,12 @@ def test_detect_prereq_cycles_finds_cycle():
     kb = load_kb(DEMO)
     cycles = detect_prereq_cycles(kb)
     assert any(set(c) == {"CS401", "CS402"} for c in cycles)
+
+
+def test_demo_kb_only_cycle_is_deliberate():
+    kb = load_kb(DEMO)
+    cycles = detect_prereq_cycles(kb)
+    assert cycles and all(set(c) == {"CS401", "CS402"} for c in cycles)
 
 
 def test_detect_prereq_cycles_none_when_acyclic():
