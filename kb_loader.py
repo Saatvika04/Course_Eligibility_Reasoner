@@ -40,6 +40,13 @@ def validate_kb(kb):
 
     course_ids = set(courses.keys())
 
+    for cid in courses:
+        if cid == "":
+            errors.append("course id must not be empty")
+    for sid in students:
+        if sid == "":
+            errors.append("student id must not be empty")
+
     for cid, course in courses.items():
         if not isinstance(course, dict):
             errors.append(f"course '{cid}' must be an object")
@@ -49,11 +56,18 @@ def validate_kb(kb):
         if not isinstance(coreqs, list):
             errors.append(f"course '{cid}' corequisites must be a list")
         else:
+            seen = set()
             for q in coreqs:
                 if not isinstance(q, str):
                     errors.append(f"course '{cid}' corequisite must be a course id string")
                 elif q not in course_ids:
                     errors.append(f"course '{cid}' corequisite '{q}' is unknown")
+                elif q == cid:
+                    errors.append(f"course '{cid}' lists itself as a corequisite")
+                elif q in seen:
+                    errors.append(f"course '{cid}' lists corequisite '{q}' more than once")
+                else:
+                    seen.add(q)
 
     for sid, student in students.items():
         if not isinstance(student, dict):
@@ -97,9 +111,13 @@ def _validate_expr(expr, course_ids, path):
             errors.append(f"{path} references unknown course '{expr}'")
         return errors
     if isinstance(expr, dict):
-        keys = [k for k in expr if k in ("and", "or")]
-        if len(keys) != 1:
-            errors.append(f"{path} must be a course id, null, or an object with exactly one 'and'/'or' key")
+        keys = list(expr)
+        if len(keys) != 1 or keys[0] not in ("and", "or"):
+            unknown = [k for k in keys if k not in ("and", "or")]
+            if unknown:
+                errors.append(f"{path} has unknown key '{unknown[0]}'; expected only 'and' or 'or'")
+            else:
+                errors.append(f"{path} must contain exactly one 'and' or 'or' key")
             return errors
         op = keys[0]
         children = expr[op]
