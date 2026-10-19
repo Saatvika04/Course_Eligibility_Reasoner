@@ -1,10 +1,11 @@
 # Course Eligibility Reasoner
 
 Decides whether a student is eligible for a course from a knowledge base of
-prerequisites (AND/OR), corequisites, waivers, and multi-step chains. This
-repo holds the **knowledge-base module** (Saatvika) plus a minimal
-backward-chaining **stub engine** used to verify KBs standalone. Deepak's
-`reasoning_engine.py` and Mohammed's `evaluate.py`/`cli.py` merge in later.
+prerequisites (AND/OR), corequisites, waivers, and multi-step chains. All
+modules are merged and tested together: the **knowledge-base module**
+(Saatvika), the symbolic **reasoning engine** (Deepak), the
+**evaluation / benchmark / CLI layer** (Mohammed), and the
+**explainability + Streamlit UI** layer (Saatvika).
 
 ## Setup
 
@@ -17,16 +18,38 @@ uv pip install -r requirements.txt
 
 - `kb_loader.py` — load, validate, save, and cycle-detect a KB.
 - `to_predicates.py` — expand domain JSON into facts + Horn-clause rules.
-- `stub_engine.py` — backward-chaining prover (unification + cycle detection).
+- `reasoning_engine.py` — forward + backward chaining engine.
+- `explain.py` — plain-English explanation of an eligibility verdict.
+- `app.py` — Streamlit web UI (verdict + explanation + trace).
 - `generate_kb.py` — seeded generator for 50/100/250/500-rule KBs.
+- `evaluate.py` — run labelled cases against both engines.
+- `cli.py` — command-line eligibility query.
+- `benchmark.py` — repeatable benchmark runner for generated KBs.
+- `metrics.py` — result normalization and timing helpers.
+- `plot_results.py` — benchmark plots.
+- `evaluation_cases.py` — labelled correctness cases.
 - `data/knowledge_base.json` — hand-written demo KB (has one deliberate cycle).
 - `kb_schema.md` — schema definition and reasoning semantics.
 
 ## Usage
 
+### Web UI
+
+```bash
+streamlit run app.py
+```
+
+### Command line
+
+```bash
+python cli.py bob CS301
+```
+
+### Python
+
 ```python
 from kb_loader import load_kb
-from stub_engine import backward_chain
+from reasoning_engine import backward_chain
 
 kb = load_kb("data/knowledge_base.json")
 result = backward_chain(kb, "bob", "CS301")
