@@ -33,6 +33,13 @@ _CASE_KB = {
         "CHAIN_TOP": {"prerequisite": "CHAIN_MID", "corequisites": []},
         "CYCLE_A": {"prerequisite": "CYCLE_B", "corequisites": []},
         "CYCLE_B": {"prerequisite": "CYCLE_A", "corequisites": []},
+        "OA_A": {"prerequisite": None, "corequisites": []},
+        "OA_B": {"prerequisite": None, "corequisites": []},
+        "OA_C": {"prerequisite": None, "corequisites": []},
+        "OA_TARGET": {"prerequisite": {"or": [{"and": ["OA_A", "OA_B"]}, "OA_C"]}, "corequisites": []},
+        "PC_PRE": {"prerequisite": None, "corequisites": []},
+        "PC_COREQ": {"prerequisite": None, "corequisites": []},
+        "PC_TARGET": {"prerequisite": "PC_PRE", "corequisites": ["PC_COREQ"]},
     },
     "students": {
         "case_student": {
@@ -50,6 +57,11 @@ _CASE_KB = {
             "taking": [],
             "waivers": [],
         },
+        "oa_full": {"completed": ["OA_A", "OA_B"], "taking": [], "waivers": []},
+        "oa_single": {"completed": ["OA_C"], "taking": [], "waivers": []},
+        "oa_none": {"completed": [], "taking": [], "waivers": []},
+        "pc_both": {"completed": ["PC_PRE"], "taking": ["PC_COREQ"], "waivers": []},
+        "pc_missing_coreq": {"completed": ["PC_PRE"], "taking": [], "waivers": []},
     },
 }
 
@@ -71,6 +83,11 @@ LABELLED_CASES = [
     {"id": "T14", "scenario": "cyclic prerequisite component with no completed dependency", "student": "case_student", "course": "CYCLE_A", "expected_eligible": False},
     {"id": "T15", "scenario": "unseen student-course pair with no prerequisites", "student": "new_student", "course": "INTRO", "expected_eligible": True},
     {"id": "T16", "scenario": "unknown course query", "student": "case_student", "course": "COURSE_DOES_NOT_EXIST", "expected_eligible": False},
+    {"id": "T17", "scenario": "OR-of-AND satisfied by the AND branch", "student": "oa_full", "course": "OA_TARGET", "expected_eligible": True},
+    {"id": "T18", "scenario": "OR-of-AND satisfied by the single branch", "student": "oa_single", "course": "OA_TARGET", "expected_eligible": True},
+    {"id": "T19", "scenario": "OR-of-AND no branch satisfied", "student": "oa_none", "course": "OA_TARGET", "expected_eligible": False},
+    {"id": "T20", "scenario": "prerequisite and corequisite both satisfied", "student": "pc_both", "course": "PC_TARGET", "expected_eligible": True},
+    {"id": "T21", "scenario": "prerequisite satisfied but corequisite missing", "student": "pc_missing_coreq", "course": "PC_TARGET", "expected_eligible": False},
 ]
 
 

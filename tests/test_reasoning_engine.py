@@ -64,9 +64,13 @@ def test_waiver_is_scoped_to_exact_target_and_prerequisite():
 
 def test_corequisite_uses_taking_only():
     data = kb({"A": (None, ["B"]), "B": (None, [])})
-    assert not backward_chain(data, "s", "A")["eligible"]
+    result = backward_chain(data, "s", "A")
+    assert not result["eligible"]
+    assert result["missing_corequisites"] == ["B"]
     data["students"]["s"]["taking"] = ["B"]
-    assert backward_chain(data, "s", "A")["eligible"]
+    result = backward_chain(data, "s", "A")
+    assert result["eligible"]
+    assert result["missing_corequisites"] == []
 
 
 def test_eligibility_does_not_imply_completion():

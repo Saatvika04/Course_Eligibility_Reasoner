@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 data/generated/
+
+# Windows/WSL alternate-data-stream metadata written alongside files.
+*:Zone.Identifier

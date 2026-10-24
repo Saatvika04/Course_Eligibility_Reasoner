@@ -38,6 +38,7 @@ def test_normalize_result_supplies_shared_fields():
     assert result["student_id"] == "student"
     assert result["course_id"] == "course"
     assert result["missing_prerequisites"] == []
+    assert result["missing_corequisites"] == []
     assert result["trace"] == []
     assert result["derived_facts"] is None
 
