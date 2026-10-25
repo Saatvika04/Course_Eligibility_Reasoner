@@ -14,7 +14,8 @@ from time import perf_counter
 
 
 _REQUIRED_FIELDS = (
-    "eligible", "student_id", "course_id", "missing_prerequisites", "trace",
+    "eligible", "student_id", "course_id", "missing_prerequisites",
+    "missing_corequisites", "trace",
     "inference_steps", "rules_examined", "derived_facts",
 )
 
@@ -27,6 +28,7 @@ def normalize_result(result, algorithm, student_id=None, course_id=None):
     normalized.setdefault("student_id", student_id)
     normalized.setdefault("course_id", course_id)
     normalized.setdefault("missing_prerequisites", [])
+    normalized.setdefault("missing_corequisites", [])
     normalized.setdefault("trace", [])
     normalized.setdefault("inference_steps", 0)
     normalized.setdefault("rules_examined", 0)
@@ -45,6 +47,7 @@ def normalize_result(result, algorithm, student_id=None, course_id=None):
     ):
         raise ValueError(f"{algorithm} result field 'derived_facts' must be non-negative or None")
     normalized["missing_prerequisites"] = sorted(set(normalized["missing_prerequisites"] or []))
+    normalized["missing_corequisites"] = sorted(set(normalized["missing_corequisites"] or []))
     normalized["trace"] = list(normalized["trace"] or [])
     normalized["algorithm"] = algorithm
     return normalized

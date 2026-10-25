@@ -201,9 +201,14 @@ def forward_prove(facts, rules, position_domains=None):
 
 
 def _result(kb, student_id, course_id, eligible, missing, trace, steps, rules_examined, derived_facts=None):
+    course = kb.get("courses", {}).get(course_id, {})
+    student = kb.get("students", {}).get(student_id, {})
+    taking = set(student.get("taking", []))
+    missing_corequisites = sorted(q for q in course.get("corequisites", []) if q not in taking)
     return {"eligible": eligible, "student_id": student_id, "course_id": course_id,
-            "missing_prerequisites": sorted(missing), "trace": trace,
-            "inference_steps": steps, "rules_examined": rules_examined,
+            "missing_prerequisites": sorted(missing),
+            "missing_corequisites": missing_corequisites,
+            "trace": trace, "inference_steps": steps, "rules_examined": rules_examined,
             "derived_facts": derived_facts}
 
 
