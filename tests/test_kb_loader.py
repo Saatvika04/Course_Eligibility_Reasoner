@@ -91,15 +91,20 @@ def test_save_and_load_roundtrip(tmp_path):
 
 
 def test_detect_prereq_cycles_finds_cycle():
-    kb = load_kb(DEMO)
+    kb = {
+        "courses": {
+            "A": {"prerequisite": "B", "corequisites": []},
+            "B": {"prerequisite": "A", "corequisites": []},
+        },
+        "students": {},
+    }
     cycles = detect_prereq_cycles(kb)
-    assert any(set(c) == {"CS401", "CS402"} for c in cycles)
+    assert any(set(c) == {"A", "B"} for c in cycles)
 
 
-def test_demo_kb_only_cycle_is_deliberate():
+def test_demo_kb_is_acyclic():
     kb = load_kb(DEMO)
-    cycles = detect_prereq_cycles(kb)
-    assert cycles and all(set(c) == {"CS401", "CS402"} for c in cycles)
+    assert detect_prereq_cycles(kb) == []
 
 
 def test_detect_prereq_cycles_none_when_acyclic():

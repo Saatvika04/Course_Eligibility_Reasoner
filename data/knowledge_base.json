@@ -1,26 +1,64 @@
 {
   "courses": {
     "MATH101": {"prerequisite": null, "corequisites": []},
+    "MATH102": {"prerequisite": null, "corequisites": []},
+    "PHY101": {"prerequisite": null, "corequisites": []},
+    "CHY101": {"prerequisite": null, "corequisites": []},
     "CS101": {"prerequisite": null, "corequisites": []},
-    "CS102": {"prerequisite": "CS101", "corequisites": []},
-    "CS201": {"prerequisite": {"and": ["CS101", "MATH101"]}, "corequisites": []},
-    "CS202": {"prerequisite": {"or": ["CS101", "MATH101"]}, "corequisites": []},
-    "CS203": {"prerequisite": "CS102", "corequisites": ["CS201"]},
-    "CS301": {"prerequisite": "CS203", "corequisites": []},
-    "CS302": {"prerequisite": {"and": ["CS102", {"or": ["CS101", "MATH101"]}]}, "corequisites": []},
-    "CS204": {"prerequisite": null, "corequisites": ["CS203"]},
-    "CS305": {"prerequisite": {"or": [{"and": ["CS101", "MATH101"]}, "CS102"]}, "corequisites": []},
     "DS101": {"prerequisite": null, "corequisites": []},
-    "DS201": {"prerequisite": "DS101", "corequisites": []},
-    "DS301": {"prerequisite": "DS201", "corequisites": []},
-    "CS401": {"prerequisite": "CS402", "corequisites": []},
-    "CS402": {"prerequisite": "CS401", "corequisites": []}
+    "ECE101": {"prerequisite": null, "corequisites": []},
+
+    "MATH103": {"prerequisite": "MATH101", "corequisites": []},
+    "MATH201": {"prerequisite": "MATH101", "corequisites": []},
+    "MATH202": {"prerequisite": "MATH101", "corequisites": []},
+    "CS102": {"prerequisite": "CS101", "corequisites": []},
+    "CS103": {"prerequisite": "CS101", "corequisites": []},
+    "CS201": {"prerequisite": "PHY101", "corequisites": []},
+    "DS201": {"prerequisite": {"and": ["DS101", "CS101"]}, "corequisites": []},
+    "ECE201": {"prerequisite": {"and": ["ECE101", "MATH101"]}, "corequisites": []},
+
+    "CS202": {"prerequisite": {"and": ["CS102", "MATH202"]}, "corequisites": []},
+    "CS203": {"prerequisite": {"and": ["CS102", "CS201"]}, "corequisites": []},
+    "CS204": {"prerequisite": "CS102", "corequisites": ["CS203"]},
+    "CS205": {"prerequisite": "CS201", "corequisites": []},
+    "CS206": {"prerequisite": "CS103", "corequisites": []},
+    "CS207": {"prerequisite": "MATH202", "corequisites": []},
+    "CS208": {"prerequisite": "CS102", "corequisites": []},
+    "CS209": {"prerequisite": "CS102", "corequisites": []},
+    "MATH301": {"prerequisite": {"and": ["MATH102", "MATH103"]}, "corequisites": []},
+    "MATH302": {"prerequisite": {"and": ["MATH102", "MATH103"]}, "corequisites": []},
+    "DS301": {"prerequisite": {"and": ["DS201", "MATH201", "CS202"]}, "corequisites": []},
+    "ECE301": {"prerequisite": {"and": ["ECE201", "MATH201"]}, "corequisites": []},
+    "ECE302": {"prerequisite": "ECE201", "corequisites": []},
+
+    "CS301": {"prerequisite": {"and": ["CS207", "CS202"]}, "corequisites": []},
+    "CS302": {"prerequisite": {"and": ["CS202", "MATH202"]}, "corequisites": []},
+    "CS303": {"prerequisite": {"or": ["CS302", {"and": ["DS301", "MATH201"]}]}, "corequisites": []},
+    "CS304": {"prerequisite": {"and": ["CS203", "CS205"]}, "corequisites": []},
+    "CS305": {"prerequisite": {"and": ["CS203", "CS205"]}, "corequisites": ["CS304"]},
+    "CS306": {"prerequisite": {"and": ["CS205", "CS204"]}, "corequisites": ["CS305"]},
+    "CS307": {"prerequisite": {"and": ["CS102", "MATH102"]}, "corequisites": []},
+    "CS310": {"prerequisite": "CS103", "corequisites": []},
+    "CS311": {"prerequisite": "CS206", "corequisites": []},
+    "DS302": {"prerequisite": "DS301", "corequisites": []},
+    "DS401": {"prerequisite": {"and": ["DS301", "CS204"]}, "corequisites": []},
+    "ECE401": {"prerequisite": {"and": ["ECE301", "CS102"]}, "corequisites": []},
+
+    "CS401": {"prerequisite": {"and": ["CS206", {"or": ["CS304", "CS305"]}]}, "corequisites": []},
+    "CS402": {"prerequisite": "CS401", "corequisites": []},
+    "CS403": {"prerequisite": "CS303", "corequisites": []},
+    "CS404": {"prerequisite": {"and": ["CS303", "MATH301"]}, "corequisites": []},
+    "CS405": {"prerequisite": {"and": ["CS302", "ECE401"]}, "corequisites": []},
+    "CS406": {"prerequisite": {"or": ["CS204", "CS205"]}, "corequisites": []},
+    "DS402": {"prerequisite": {"and": ["DS201", "MATH201"]}, "corequisites": []},
+    "ECE402": {"prerequisite": "ECE201", "corequisites": []},
+    "MATH401": {"prerequisite": {"and": ["MATH102", "MATH202"]}, "corequisites": []}
   },
   "students": {
     "bob": {
-      "completed": ["CS101", "MATH101", "CS102"],
-      "taking": ["CS201"],
-      "waivers": [{"course": "CS202", "prerequisite": "MATH101"}]
+      "completed": ["CS101", "MATH101", "MATH102", "CS102", "CS103", "CS201", "MATH202", "PHY101"],
+      "taking": ["CS203"],
+      "waivers": [{"course": "CS202", "prerequisite": "MATH202"}]
     },
     "alice": {
       "completed": ["CS101"],
@@ -28,14 +66,44 @@
       "waivers": []
     },
     "carol": {
-      "completed": ["CS101", "MATH101", "CS102", "DS101", "DS201"],
-      "taking": ["CS203"],
+      "completed": ["DS101", "CS101", "MATH101", "MATH201", "DS201", "CS102", "MATH202", "CS202", "DS301"],
+      "taking": ["CS204"],
       "waivers": []
     },
     "dave": {
       "completed": [],
       "taking": [],
       "waivers": []
+    },
+    "erin": {
+      "completed": ["CS101", "CS102", "CS103", "CS201", "CS202", "CS203", "CS204", "CS205", "CS206", "CS207", "CS301", "CS302", "CS303", "CS304", "CS305", "MATH101", "MATH102", "MATH103", "MATH201", "MATH202", "MATH301", "PHY101"],
+      "taking": ["CS401"],
+      "waivers": []
+    },
+    "fiona": {
+      "completed": ["ECE101", "MATH101", "MATH102", "PHY101", "ECE201", "MATH201", "ECE301", "CS101", "CS102"],
+      "taking": ["ECE401"],
+      "waivers": []
+    },
+    "george": {
+      "completed": ["CS101", "CS102", "CS201", "CS203", "CS205", "CS103", "CS204", "PHY101", "CS206"],
+      "taking": ["CS304"],
+      "waivers": []
+    },
+    "hana": {
+      "completed": ["DS101", "CS101", "MATH101", "MATH201", "DS201", "CS102", "MATH202", "CS202", "DS301", "CS204", "MATH301", "DS401"],
+      "taking": ["DS402"],
+      "waivers": []
+    },
+    "ivan": {
+      "completed": ["CS101", "CS102", "CS103", "MATH101", "CS201", "CS204"],
+      "taking": [],
+      "waivers": [{"course": "CS202", "prerequisite": "CS102"}]
+    },
+    "jenny": {
+      "completed": ["CS101", "MATH101", "CS102"],
+      "taking": ["CS203"],
+      "waivers": [{"course": "CS201", "prerequisite": "PHY101"}]
     }
   }
 }

@@ -5,9 +5,23 @@ shape. Predicate-level helpers are intentionally public enough for small rule
 sets to be tested independently.
 """
 
+import re
 from itertools import product
 
 from to_predicates import Var, to_predicates
+
+
+def _pred_label(term):
+    """Render a predicate tuple as ``name(arg1, arg2, ...)`` for diagrams."""
+    term = tuple(term)
+    return f"{term[0]}({', '.join(str(x) for x in term[1:])})"
+
+
+def _rule_label(rule):
+    """Render a Horn clause compactly as ``head :- name1, name2`` for diagrams."""
+    head = re.sub(r"__\d+", "", _pred_label(rule["head"]))
+    body = ", ".join(p[0] for p in rule["body"])
+    return f"{head} :- {body}" if body else f"{head} :- []"
 
 
 def _is_var(term):
@@ -88,14 +102,28 @@ def backward_prove(facts, rules, goal):
     eligibility results have ``derived_facts=None`` because this algorithm
     does not build a closure.
     """
-    state = {"steps": 0, "rules": 0, "trace": [], "active": [], "failed_goals": []}
+    state = {"steps": 0, "rules": 0, "trace": [], "active": [], "failed_goals": [],
+             "nodes": {}, "edges": [], "nid": 0}
 
-    def solve(current_goal, bindings):
+    def add_node(kind, label, status):
+        nid = state["nid"]
+        state["nid"] += 1
+        state["nodes"][nid] = {"id": nid, "label": label, "kind": kind, "status": status}
+        return nid
+
+    def set_status(nid, status):
+        state["nodes"][nid]["status"] = status
+
+    def solve(current_goal, bindings, parent=None):
         state["steps"] += 1
         goal = _ground(current_goal, bindings)
         key = goal
+        node_id = add_node("goal", _pred_label(goal), "pending")
+        if parent is not None:
+            state["edges"].append({"from": parent, "to": node_id, "label": "subgoal"})
         if key in state["active"]:
             state["trace"].append(f"CYCLE {goal}")
+            set_status(node_id, "cycle")
             return []
         state["trace"].append(f"GOAL {goal}")
         answers = []
@@ -104,6 +132,8 @@ def backward_prove(facts, rules, goal):
             if merged is not None:
                 state["trace"].append(f"FACT {fact}")
                 answers.append(merged)
+                fact_id = add_node("fact", _pred_label(tuple(fact)), "satisfied")
+                state["edges"].append({"from": node_id, "to": fact_id, "label": "fact"})
         state["active"].append(key)
         try:
             for index, rule in enumerate(rules):
@@ -113,26 +143,36 @@ def backward_prove(facts, rules, goal):
                 if merged is None:
                     continue
                 state["trace"].append(f"RULE {candidate['head']} :- {candidate['body']}")
+                rule_id = add_node("rule", _rule_label(candidate), "applied")
+                state["edges"].append({"from": node_id, "to": rule_id, "label": "rule"})
                 partials = [merged]
                 for body_goal in candidate["body"]:
                     next_partials = []
                     for partial in partials:
-                        next_partials.extend(solve(body_goal, partial))
+                        next_partials.extend(solve(body_goal, partial, rule_id))
                     partials = next_partials
                     if not partials:
                         break
+                if not partials:
+                    set_status(rule_id, "failed")
                 answers.extend(partials)
         finally:
             state["active"].pop()
         if not answers:
             state["trace"].append(f"FAIL {goal}")
             state["failed_goals"].append(goal)
+            set_status(node_id, "failed")
+        else:
+            set_status(node_id, "proved")
         return answers
 
     answers = solve(tuple(goal), {})
+    nodes = [state["nodes"][i] for i in sorted(state["nodes"])]
+    graph = {"kind": "backward", "nodes": nodes, "edges": state["edges"], "target": None}
     return {"proved": bool(answers), "substitutions": answers,
             "trace": state["trace"], "inference_steps": state["steps"],
-            "rules_examined": state["rules"], "failed_goals": state["failed_goals"]}
+            "rules_examined": state["rules"], "failed_goals": state["failed_goals"],
+            "graph": graph}
 
 
 def forward_prove(facts, rules, position_domains=None):
@@ -148,6 +188,8 @@ def forward_prove(facts, rules, position_domains=None):
     position_domains = position_domains or {}
     known = list(dict.fromkeys(tuple(f) for f in facts))
     known_set = set(known)
+    initial = list(known)
+    derivations = []
     # Datalog rules may contain universally quantified head variables which
     # do not occur in the body (the project's completion rule has this form).
     # Ground those variables over the finite constants in the current KB.
@@ -193,14 +235,43 @@ def forward_prove(facts, rules, position_domains=None):
                         known_set.add(derived)
                         additions.append(derived)
                         trace.append(f"DERIVE {derived} by {candidate['head']} :- {candidate['body']}")
+                        sources = tuple(_ground(bg, completed_binding) for bg in candidate["body"])
+                        derivations.append({"derived": derived, "sources": sources,
+                                            "rule": candidate["head"][0]})
         if not additions:
             break
         known.extend(additions)
+
+    nodes = []
+    node_ids = {}
+
+    def add_node(fact, status):
+        if fact in node_ids:
+            return node_ids[fact]
+        nid = len(nodes)
+        nodes.append({"id": nid, "label": _pred_label(fact), "kind": "fact", "status": status})
+        node_ids[fact] = nid
+        return nid
+
+    for fact in initial:
+        add_node(fact, "initial")
+    for d in derivations:
+        add_node(d["derived"], "derived")
+    edges = []
+    for d in derivations:
+        did = node_ids[d["derived"]]
+        for src in d["sources"]:
+            if src in node_ids:
+                edges.append({"from": node_ids[src], "to": did, "label": d["rule"]})
+    graph = {"kind": "forward", "nodes": nodes, "edges": edges, "target": None}
+
     return {"facts": known, "trace": trace, "inference_steps": steps,
-            "rules_examined": rules_examined, "derived_facts": len(known) - len(set(tuple(f) for f in facts))}
+            "rules_examined": rules_examined,
+            "derived_facts": len(known) - len(set(tuple(f) for f in facts)),
+            "graph": graph}
 
 
-def _result(kb, student_id, course_id, eligible, missing, trace, steps, rules_examined, derived_facts=None):
+def _result(kb, student_id, course_id, eligible, missing, trace, steps, rules_examined, derived_facts=None, graph=None):
     course = kb.get("courses", {}).get(course_id, {})
     student = kb.get("students", {}).get(student_id, {})
     taking = set(student.get("taking", []))
@@ -209,7 +280,7 @@ def _result(kb, student_id, course_id, eligible, missing, trace, steps, rules_ex
             "missing_prerequisites": sorted(missing),
             "missing_corequisites": missing_corequisites,
             "trace": trace, "inference_steps": steps, "rules_examined": rules_examined,
-            "derived_facts": derived_facts}
+            "derived_facts": derived_facts, "graph": graph}
 
 
 def backward_chain(kb, student_id, course_id):
@@ -223,7 +294,8 @@ def backward_chain(kb, student_id, course_id):
             if len(goal) == 4 and goal[0] == "prereq_satisfied":
                 missing.add(goal[3])
     return _result(kb, student_id, course_id, proof["proved"], missing,
-                   proof["trace"], proof["inference_steps"], proof["rules_examined"])
+                   proof["trace"], proof["inference_steps"], proof["rules_examined"],
+                   graph=proof["graph"])
 
 
 def forward_chain(kb, student_id, course_id):
@@ -231,33 +303,56 @@ def forward_chain(kb, student_id, course_id):
     predicates = to_predicates(kb)
     students = [student_id]
     courses = list(kb.get("courses", {}))
+    # Restrict to the queried student's facts (plus course-structural facts) so
+    # the forward closure does not derive cross-student tuples on large KBs.
+    student_preds = {"completed", "taking", "waiver"}
+    facts = [f for f in predicates["facts"]
+             if f[0] not in student_preds or f[1] == student_id]
     domains = {
         "eligible": {1: students, 2: courses},
         "coreqs_satisfied": {1: students, 2: courses},
         "prereq_satisfied": {2: courses},
     }
-    closure = forward_prove(predicates["facts"], predicates["rules"], domains)
+    closure = forward_prove(facts, predicates["rules"], domains)
     target = ("eligible", student_id, course_id)
     eligible = target in closure["facts"]
+    graph = closure["graph"]
+
+    def leaves(expr):
+        if isinstance(expr, str):
+            return {expr}
+        if isinstance(expr, dict):
+            children = expr.get("and", expr.get("or", []))
+            sets = [leaves(child) for child in children]
+            return set.union(*sets) if sets else set()
+        return set()
+
+    prereq_leaves = leaves(kb.get("courses", {}).get(course_id, {}).get("prerequisite"))
+    prereq_labels = {_pred_label(("prereq_satisfied", student_id, course_id, p))
+                     for p in prereq_leaves}
+    target_label = _pred_label(target)
+    coreq_label = f"coreqs_satisfied({student_id}, {course_id})"
+    target_facts = set()
+    student_facts = set()
+    for n in graph["nodes"]:
+        if n["label"] == target_label:
+            graph["target"] = n["id"]
+        if n["label"] == coreq_label or n["label"] in prereq_labels:
+            target_facts.add(n["id"])
+        for pfx in (f"completed({student_id},", f"taking({student_id},", f"waiver({student_id},"):
+            if n["label"].startswith(pfx):
+                student_facts.add(n["id"])
+    graph["focus"] = ([graph["target"]] if graph["target"] is not None
+                      else sorted(target_facts | student_facts))
     missing = set()
     if not eligible:
         student = kb.get("students", {}).get(student_id, {})
-        course = kb.get("courses", {}).get(course_id, {})
         completed = set(student.get("completed", []))
         waivers = {(w["course"], w["prerequisite"]) for w in student.get("waivers", [])}
-
-        def leaves(expr):
-            if isinstance(expr, str):
-                return {expr}
-            if isinstance(expr, dict):
-                children = expr.get("and", expr.get("or", []))
-                sets = [leaves(child) for child in children]
-                return set.union(*sets) if sets else set()
-            return set()
-        candidates = leaves(course.get("prerequisite"))
-        missing = {p for p in candidates if p not in completed and (course_id, p) not in waivers}
+        missing = {p for p in prereq_leaves if p not in completed and (course_id, p) not in waivers}
         trace = closure["trace"] + [f"NO DERIVED FACT {target}"]
     else:
         trace = closure["trace"] + [f"PROVED {target}"]
     return _result(kb, student_id, course_id, eligible, missing, trace,
-                   closure["inference_steps"], closure["rules_examined"], closure["derived_facts"])
+                   closure["inference_steps"], closure["rules_examined"], closure["derived_facts"],
+                   graph=graph)

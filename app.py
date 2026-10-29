@@ -3,8 +3,10 @@ import streamlit as st
 from explain import explain
 from kb_loader import load_kb, detect_prereq_cycles
 from reasoning_engine import backward_chain, forward_chain
+from visualize import render_backward_svg, render_forward_svg
 
 ALGORITHMS = {"Backward chaining": backward_chain, "Forward chaining": forward_chain}
+RENDERERS = {"Backward chaining": render_backward_svg, "Forward chaining": render_forward_svg}
 
 
 @st.cache_data
@@ -39,6 +41,9 @@ def main():
         verdict = "✅ ELIGIBLE" if result["eligible"] else "❌ NOT ELIGIBLE"
         st.markdown(f"### {verdict}")
         st.text(explain(kb, result))
+        svg, width, height = RENDERERS[name](result["graph"])
+        st.caption("Inference trace")
+        st.components.html(svg, width=width + 30, height=min(height + 30, 1000), scrolling=True)
         with st.expander("Counters"):
             st.write({k: result[k] for k in ("inference_steps", "rules_examined", "derived_facts")})
         with st.expander("Raw trace"):
